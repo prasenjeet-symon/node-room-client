@@ -47,7 +47,7 @@ export interface DataEmitterData {
 }
 
 export interface DeltaData {
-    daoIdentifier: string;
+    nodeIdentifier: string;
     delta: any;
     id: string;
 }
