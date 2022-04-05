@@ -23,7 +23,7 @@ export class NodeRoom {
         const httpCall: HttpNetworkFetch = {
             httpClientUUID: nodeConfig.httpInstanceUUID,
             canCache: config.canCache === undefined ? nodeConfig.bootstrapConfig.canCache : config.canCache,
-            databaseName: config.dataBaseName === undefined ? nodeConfig.bootstrapConfig.database : config.dataBaseName,
+            roomName: config.roomName === undefined ? nodeConfig.bootstrapConfig.roomName : config.roomName,
             nodeInstanceUUID: config.paginationID === undefined ? nanoid() : config.paginationID,
             nodeName: nodeName,
             paramObject: paramObject,
@@ -36,8 +36,8 @@ export class NodeRoom {
 
         const dataEmitter = HttpDataEmitter.getInstance();
         const dataEmitterSource = dataEmitter.getNewSource(httpCall.nodeInstanceUUID);
-        // patch to loading
+        // patch to loading state
         dataEmitter.patchData(httpCall.nodeInstanceUUID, { status: 'loading' });
-        return dataEmitterSource;
+        return dataEmitterSource.asObservable();
     }
 }

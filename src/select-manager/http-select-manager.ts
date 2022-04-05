@@ -28,6 +28,7 @@ export class HttpDataEmitter {
         if (this.httpDataEmitter.has(nodeInstanceUUID)) {
             const currentData = this.httpDataEmitter.get(nodeInstanceUUID)?.getValue();
             const newData = { ...currentData, ...data };
+            // TOOD: we need to freeze the object to prevent the user from changing it
             this.httpDataEmitter.get(nodeInstanceUUID)?.next(JSON.parse(JSON.stringify(newData)));
         }
     }
@@ -40,6 +41,9 @@ export class HttpDataEmitter {
         this.patchData(nodeInstanceUUID, { error: error, status: 'error' });
     }
 
+    /**
+     * Emit the data and complete the source
+     */
     public emitDataComplete(nodeInstanceUUID: string, data: any) {
         if (this.httpDataEmitter.has(nodeInstanceUUID)) {
             this.patchData(nodeInstanceUUID, { data: data, error: null, status: 'loaded' });
@@ -49,6 +53,9 @@ export class HttpDataEmitter {
         }
     }
 
+    /**
+     * Emit the error and complete the source
+     */
     public emitErrorComplete(nodeInstanceUUID: string, error: any) {
         if (this.httpDataEmitter.has(nodeInstanceUUID)) {
             this.patchData(nodeInstanceUUID, { error: error, status: 'error' });
@@ -72,10 +79,10 @@ export class HttpSelectManager {
         return HttpSelectManager._instance;
     }
 
-    public addSelect(nodeIdentifier: string, httpClientUUID: string, databaseName: string, nodeName: string, paramObject: any, result: any) {
+    public addSelect(nodeIdentifier: string, httpClientUUID: string, roomName: string, nodeName: string, paramObject: any, result: any) {
         const httpSelect: HttpSelect = {
             httpClientUUID,
-            databaseName,
+            roomName,
             nodeName,
             paramObject,
             result,

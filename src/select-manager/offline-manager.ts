@@ -14,8 +14,8 @@ export class OfflineManager {
         return OfflineManager._instance;
     }
 
-    public async getLocal(httpClientUUID: string, dataBaseName: string, nodeName: string, paramObject: any): Promise<{ daoIdentifier: string; data: HttpSelect } | null> {
-        const localId: string = simpleNodeUUID(httpClientUUID, dataBaseName, nodeName, paramObject);
+    public async getLocal(httpClientUUID: string, roomName: string, nodeName: string, paramObject: any): Promise<{ daoIdentifier: string; data: HttpSelect } | null> {
+        const localId: string = simpleNodeUUID(httpClientUUID, roomName, nodeName, paramObject);
         const data = localStorage.getItem(localId);
         if (data) {
             return JSON.parse(data);
@@ -24,14 +24,14 @@ export class OfflineManager {
     }
 
     public setLocal(daoIdentifier: string, data: HttpSelect) {
-        const localId: string = simpleNodeUUID(data.httpClientUUID, data.databaseName, data.nodeName, data.paramObject);
+        const localId: string = simpleNodeUUID(data.httpClientUUID, data.roomName, data.nodeName, data.paramObject);
 
         // set to the local storage
         localStorage.setItem(localId, JSON.stringify({ daoIdentifier: daoIdentifier, data: data }));
     }
 
     public async fetch(httpCall: HttpNetworkFetch) {
-        const localData = await this.getLocal(httpCall.httpClientUUID, httpCall.databaseName, httpCall.nodeName, httpCall.paramObject);
+        const localData = await this.getLocal(httpCall.httpClientUUID, httpCall.roomName, httpCall.nodeName, httpCall.paramObject);
         if (localData) {
             const localDataForPagination: HttpSelect | undefined = {
                 ...localData.data,
@@ -39,7 +39,8 @@ export class OfflineManager {
             };
 
             HttpPagination.getInstance().sendData(localDataForPagination, localData.daoIdentifier, httpCall.nodeInstanceUUID, true);
-        }else{
+        } else {
+            console.error('No local data found for this node');
             console.log('no local data');
         }
     }

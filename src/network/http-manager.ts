@@ -28,7 +28,7 @@ export class HttpNetworkManager {
         const data = await fetch(nodeConfig.bootstrapConfig.host, {
             method: 'POST',
             headers: header,
-            body: JSON.stringify({ roomName: httpCall.databaseName, nodeName: httpCall.nodeName, paramObject: httpCall.paramObject }),
+            body: JSON.stringify({ roomName: httpCall.roomName, nodeName: httpCall.nodeName, paramObject: httpCall.paramObject }),
         }).then((response) => response.json());
 
         if (data.hasOwnProperty('nodeIdentifier')) {
@@ -37,11 +37,11 @@ export class HttpNetworkManager {
             const nodeIdentifier = data.nodeIdentifier;
             const result = data.result;
 
-            HttpSelectManager.getInstance().addSelect(nodeIdentifier, httpCall.httpClientUUID, httpCall.databaseName, httpCall.nodeName, httpCall.paramObject, result);
+            HttpSelectManager.getInstance().addSelect(nodeIdentifier, httpCall.httpClientUUID, httpCall.roomName, httpCall.nodeName, httpCall.paramObject, result);
 
             // call the paginator to emit the data
             const httpSelect: HttpSelect = {
-                databaseName: httpCall.databaseName,
+                roomName: httpCall.roomName,
                 httpClientUUID: httpCall.httpClientUUID,
                 nodeName: httpCall.nodeName,
                 paramObject: httpCall.paramObject,

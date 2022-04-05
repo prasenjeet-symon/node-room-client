@@ -15,6 +15,8 @@ export class BootstrapConfiguration {
     }
 
     public setConfig(config: BootStrapConfig) {
+        // check if the httpInstanceUUID is already set
+        // if set then use that otherwise generate a new one
         let httpInstanceUUID = localStorage.getItem('httpInstanceUUID');
         if (!httpInstanceUUID) {
             httpInstanceUUID = nanoid();

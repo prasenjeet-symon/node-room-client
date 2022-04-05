@@ -1,13 +1,13 @@
 export interface HttpSelect {
     httpClientUUID: string;
-    databaseName: string;
+    roomName: string;
     nodeName: string;
     paramObject: string;
     result: any;
 }
 
 export interface NodeCallConfig {
-    dataBaseName?: string;
+    roomName?: string;
     canCache?: boolean;
     isSingleCall?: boolean;
     paginationID?: string;
@@ -15,7 +15,7 @@ export interface NodeCallConfig {
 
 export interface HttpNetworkFetch {
     httpClientUUID: string;
-    databaseName: string;
+    roomName: string;
     nodeName: string;
     paramObject: string;
     canCache: boolean;
@@ -23,14 +23,14 @@ export interface HttpNetworkFetch {
 }
 
 export interface BootStrapConfig {
-    host: string; // this is main url of the server
-    supportOffline: boolean; // should we support offline mode
-    database: string; // database name ( change the name to Room Name )
-    canCache: boolean; // should we cache the calling node
+    host: string;
+    supportOffline: boolean;
+    roomName: string;
+    canCache: boolean;
 }
 
 export interface NodeRoomConfig {
-    // this is the http client uuid , which is same until the browser is cached is deleted
+    // this is the http client uuid, which is same until the browser cached is deleted
     // we need to use the local storage to store the data
     httpInstanceUUID: string;
     bootstrapConfig: BootStrapConfig;
