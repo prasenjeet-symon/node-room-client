@@ -25,21 +25,7 @@ export function isObject(value: any) {
 }
 
 export function isArray(value: any) {
-    try {
-        if (typeof value === 'boolean' || typeof value === 'number' || typeof value === 'string' || typeof value === 'bigint' || typeof value === 'function' || typeof value === 'symbol') {
-            return false;
-        } else {
-            if (value.length) {
-                // array
-                return true;
-            } else {
-                // possibly object
-                return false;
-            }
-        }
-    } catch (error) {
-        return false;
-    }
+    return Array.isArray(value);
 }
 
 export function isPrimitive(value: any) {

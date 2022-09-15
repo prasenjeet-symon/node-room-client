@@ -57,6 +57,7 @@ export class HttpPagination {
                 paginationData.forEach((paginationData: { daoIdentifier: string; data: HttpSelect | undefined }) => {
                     const data = paginationData.data;
                     if (data) {
+                        console.log(data, 'PAGINATION DATA')
                         // result is assumed to be array
                         finalData.push(...data.result);
                     }
