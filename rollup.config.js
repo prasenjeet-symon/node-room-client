@@ -3,7 +3,7 @@ import { terser } from 'rollup-plugin-terser';
 import del from 'del';
 
 export default async function ({ watch }) {
-    await del('build');
+    // await del('build');
 
     const builds = [];
 

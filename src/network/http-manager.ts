@@ -25,7 +25,7 @@ export class HttpNetworkManager {
         header.append('can-cache', httpCall.canCache ? '1' : '0');
         header.append('client-instance-uuid', httpCall.httpClientUUID);
 
-        const data = await fetch(nodeConfig.bootstrapConfig.host, {
+        const data = await fetch(nodeConfig.bootstrapConfig.host + '/node-room', {
             method: 'POST',
             headers: header,
             body: JSON.stringify({ roomName: httpCall.roomName, nodeName: httpCall.nodeName, paramObject: httpCall.paramObject }),
@@ -60,6 +60,7 @@ export class HttpNetworkManager {
 
             if (data.hasOwnProperty('delta')) {
                 const delta: DeltaData[] = data.delta;
+
                 DeltaManager.getInstance().settleDelta(delta);
             }
         }

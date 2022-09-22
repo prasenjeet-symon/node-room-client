@@ -21,6 +21,7 @@ export class DeltaManager {
         return delta
             .map((p) => {
                 const cachedDao = httpSelectManager.getSelect(p.nodeIdentifier);
+
                 if (cachedDao) {
                     const newResult = findNewValueFromDelta(cachedDao?.result, p.delta, p.id);
                     httpSelectManager.addSelect(p.nodeIdentifier, cachedDao?.httpClientUUID, cachedDao?.roomName, cachedDao?.nodeName, cachedDao?.paramObject, newResult);

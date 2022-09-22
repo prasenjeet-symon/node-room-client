@@ -40,8 +40,7 @@ export class OfflineManager {
 
             HttpPagination.getInstance().sendData(localDataForPagination, localData.daoIdentifier, httpCall.nodeInstanceUUID, true);
         } else {
-            console.error('No local data found for this node');
-            console.log('no local data');
+            console.warn(`No offline data found for ${httpCall.roomName}  ${httpCall.nodeName}  ${httpCall.paramObject}`);
         }
     }
 }

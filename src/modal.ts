@@ -27,6 +27,7 @@ export interface BootStrapConfig {
     supportOffline: boolean;
     roomName: string;
     canCache: boolean;
+    supportMultiTab: boolean;
 }
 
 export interface NodeRoomConfig {
