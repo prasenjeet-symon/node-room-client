@@ -24,6 +24,14 @@ export class HttpDataEmitter {
         return this.httpDataEmitter.get(nodeInstanceUUID) as BehaviorSubject<DataEmitterData>;
     }
 
+    // mark complete
+    public markComplete(nodeInstanceUUID: string) {
+        if (this.httpDataEmitter.has(nodeInstanceUUID)) {
+            this.httpDataEmitter.get(nodeInstanceUUID)?.complete();
+            this.httpDataEmitter.delete(nodeInstanceUUID);
+        }
+    }
+
     public patchData(nodeInstanceUUID: string, data: any) {
         if (this.httpDataEmitter.has(nodeInstanceUUID)) {
             const currentData = this.httpDataEmitter.get(nodeInstanceUUID)?.getValue();

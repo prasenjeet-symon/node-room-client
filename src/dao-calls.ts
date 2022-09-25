@@ -6,7 +6,7 @@ import { HttpDataEmitter } from './select-manager/http-select-manager';
 import { OfflineManager } from './select-manager/offline-manager';
 
 export class NodeRoom {
-    static _instance: NodeRoom;
+    private static _instance: NodeRoom;
 
     private constructor() {}
 
