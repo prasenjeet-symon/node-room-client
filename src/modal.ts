@@ -1,40 +1,36 @@
 export interface HttpSelect {
-    httpClientUUID: string;
+    universalUniqueUserIdentifier: string;
     roomName: string;
     nodeName: string;
-    paramObject: string;
+    paramObject: any;
     result: any;
 }
 
 export interface NodeCallConfig {
-    roomName?: string;
-    canCache?: boolean;
-    isSingleCall?: boolean;
-    paginationID?: string;
+    roomName?: string; // Name of the room to which this node belong, if not provided, then the default room name will be used
+    canCache?: boolean; // If true, then we will cache this node on the server and let you know when the data is updated, if not provided, then the default value will be used
+    paginationID?: string; // used to configure the pagination , if not provided we will create for you
+    supportOffline?: boolean; // weather to cache this node locally on your machine, if not provided then the default value will be used
+    isGenesis?: boolean; // if true then pagination is active on this node, we will create a new data emitter for the pagination node
+    waitForNodes?: string[]; // array of node relation ids to wait for before executing this node
 }
 
 export interface HttpNetworkFetch {
-    httpClientUUID: string;
+    clientInstanceUUID: string;
+    universalUniqueUserIdentifier: string;
+    paginationID: string;
     roomName: string;
     nodeName: string;
-    paramObject: string;
+    paramObject: any;
     canCache: boolean;
-    nodeInstanceUUID: string;
+    supportOffline: boolean;
 }
 
 export interface BootStrapConfig {
-    host: string;
-    supportOffline: boolean;
-    roomName: string;
-    canCache: boolean;
-    supportMultiTab: boolean;
-}
-
-export interface NodeRoomConfig {
-    // this is the http client uuid, which is same until the browser cached is deleted
-    // we need to use the local storage to store the data
-    httpInstanceUUID: string;
-    bootstrapConfig: BootStrapConfig;
+    host: string; // base url to node room server
+    supportOffline: boolean; // can cache node locally
+    defaultRoom: string; // give the default room name to use for every node
+    canCache: boolean; // can cache the select node on the server or not
 }
 
 export type LOADING_STATUS = 'loading' | 'loaded' | 'error';
@@ -44,7 +40,8 @@ export interface DataEmitterData {
     error: any | null;
     data: any | null;
     isLocal: boolean;
-    paginationUUID: string | null;
+    paginationID: string | null;
+    nodeRelationID: string;
 }
 
 export interface DeltaData {
@@ -55,5 +52,15 @@ export interface DeltaData {
 
 export interface DeltaFinalResult {
     nodeIdentifier: string;
-    result: any;
+    result: HttpSelect;
+}
+
+export interface LocalStorage {
+    nodeIdentifier: string;
+    data: HttpSelect;
+}
+
+export interface PaginationData {
+    nodeIdentifier: string;
+    data: HttpSelect | undefined;
 }

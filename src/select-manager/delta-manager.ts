@@ -20,20 +20,19 @@ export class DeltaManager {
 
         return delta
             .map((p) => {
-                const cachedDao = httpSelectManager.getSelect(p.nodeIdentifier);
+                const cachedNode = httpSelectManager.getSelect(p.nodeIdentifier);
 
-                if (cachedDao) {
-                    const newResult = findNewValueFromDelta(cachedDao?.result, p.delta, p.id);
-                    httpSelectManager.addSelect(p.nodeIdentifier, cachedDao?.httpClientUUID, cachedDao?.roomName, cachedDao?.nodeName, cachedDao?.paramObject, newResult);
-                    const deltaHttpSelect: HttpSelect = {
-                        roomName: cachedDao.roomName,
-                        httpClientUUID: cachedDao.httpClientUUID,
-                        nodeName: cachedDao.nodeName,
-                        paramObject: cachedDao.paramObject,
+                if (cachedNode) {
+                    const newResult = findNewValueFromDelta(cachedNode.result, p.delta, p.id);
+                    const newCachedNode: HttpSelect = {
+                        ...cachedNode,
                         result: newResult,
                     };
 
-                    return { nodeIdentifier: p.nodeIdentifier, result: deltaHttpSelect };
+                    // update cache with new result
+                    httpSelectManager.addSelect(p.nodeIdentifier, newCachedNode);
+
+                    return { nodeIdentifier: p.nodeIdentifier, result: newCachedNode };
                 } else {
                     return null;
                 }
@@ -44,10 +43,9 @@ export class DeltaManager {
     public settleDelta(incomingDelta: DeltaData[]) {
         const delta = this.computeLatestResult(incomingDelta);
 
-        const nodeIdentifierRelations = NodeIdentifierRelations.getInstance();
         delta.forEach((delta) => {
-            const nodeInstanceUUID: string[] = nodeIdentifierRelations.getRelation(delta.nodeIdentifier);
-            HttpPagination.getInstance().sendDataFromDelta(delta.result, delta.nodeIdentifier, nodeInstanceUUID);
+            const paginationIDS: string[] = NodeIdentifierRelations.getInstance().getRelation(delta.nodeIdentifier);
+            HttpPagination.getInstance().sendDataFromDelta(delta.result, delta.nodeIdentifier, paginationIDS);
         });
     }
 }

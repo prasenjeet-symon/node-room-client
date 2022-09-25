@@ -1,9 +1,9 @@
-import { HttpSelect } from '../modal';
+import { HttpSelect, PaginationData } from '../modal';
 import { HttpDataEmitter, HttpSelectManager } from '../select-manager/http-select-manager';
 
 export class HttpPagination {
     private static _instance: HttpPagination;
-    private paginationHistory: Map<string, string[]> = new Map(); // nodeInstanceUUID: string, daoIdentifier: string[];
+    private paginationHistory: Map<string, string[]> = new Map(); // paginationID: string, nodeIdentifier: string[];
     private constructor() {}
 
     public static getInstance(): HttpPagination {
@@ -13,78 +13,71 @@ export class HttpPagination {
         return HttpPagination._instance;
     }
 
-    public getHistory(nodeInstanceUUID: string) {
-        if (!this.paginationHistory.has(nodeInstanceUUID)) {
-            this.paginationHistory.set(nodeInstanceUUID, []);
+    private getHistory(paginationID: string) {
+        if (!this.paginationHistory.has(paginationID)) {
+            this.paginationHistory.set(paginationID, []);
         }
-        return this.paginationHistory.get(nodeInstanceUUID);
+
+        return this.paginationHistory.get(paginationID);
     }
 
-    public sendDataFromDelta(data: HttpSelect | undefined, daoIdentifier: string, nodeInstanceUUID: string[]) {
-        nodeInstanceUUID.forEach((nodeInstanceUUID) => {
-            this.sendData(data, daoIdentifier, nodeInstanceUUID);
+    public sendDataFromDelta(data: HttpSelect | undefined, nodeIdentifier: string, paginationIDS: string[]) {
+        paginationIDS.forEach((paginationID) => {
+            this.sendData(data, nodeIdentifier, paginationID);
         });
     }
 
-    public sendData(data: HttpSelect | undefined, daoIdentifier: string, nodeInstanceUUID: string, isLocal: boolean = false) {
-        // data is the data of daoIdentifier
-        const history = this.getHistory(nodeInstanceUUID);
+    public sendData(data: HttpSelect | undefined, nodeIdentifier: string, paginationID: string, isLocal: boolean = false) {
+        const history = this.getHistory(paginationID);
+
         if (history) {
-            let indexOfDaoIdentifier = history.indexOf(daoIdentifier);
-            if (indexOfDaoIdentifier === -1) {
+            let indexOfNodeIdentifier = history.indexOf(nodeIdentifier);
+            if (indexOfNodeIdentifier === -1) {
                 // if not found, add it
-                indexOfDaoIdentifier = history.length;
-                history.push(daoIdentifier);
-                this.paginationHistory.set(nodeInstanceUUID, history);
+                indexOfNodeIdentifier = history.length;
+                history.push(nodeIdentifier);
+                this.paginationHistory.set(paginationID, history);
             }
 
-            if (history.length > 1) {
-                const leftPosition = history.slice(0, indexOfDaoIdentifier);
-                const rightPosition = indexOfDaoIdentifier === history.length - 1 ? [] : history.slice(indexOfDaoIdentifier + 1);
-                const httpSelectManager = HttpSelectManager.getInstance();
+            const leftNodes = history.slice(0, indexOfNodeIdentifier);
+            const rightNodes = indexOfNodeIdentifier === history.length - 1 ? [] : history.slice(indexOfNodeIdentifier + 1);
+            const httpSelectManager = HttpSelectManager.getInstance();
 
-                const paginationData: { daoIdentifier: string; data: HttpSelect | undefined }[] = [];
-                leftPosition.forEach((daoIdentifier: string) => {
-                    paginationData.push({ daoIdentifier, data: httpSelectManager.getSelect(daoIdentifier) });
-                });
-                paginationData.push({ daoIdentifier, data });
-                rightPosition.forEach((daoIdentifier: string) => {
-                    paginationData.push({ daoIdentifier, data: httpSelectManager.getSelect(daoIdentifier) });
-                });
+            const paginationData: PaginationData[] = [];
 
-                // pagination means data is array;
-                const finalData: any[] = [];
-                paginationData.forEach((paginationData: { daoIdentifier: string; data: HttpSelect | undefined }) => {
-                    const data = paginationData.data;
-                    if (data) {
-                        // result is assumed to be array
-                        finalData.push(...data.result);
-                    }
-                });
+            leftNodes.forEach((nodeIdentifier: string) => {
+                paginationData.push({ nodeIdentifier, data: httpSelectManager.getSelect(nodeIdentifier) });
+            });
 
-                const httpDataEmitter = HttpDataEmitter.getInstance();
-                httpDataEmitter.emitData(nodeInstanceUUID, finalData, isLocal);
-            } else {
-                // if only one, just send it
-                const httpDataEmitter = HttpDataEmitter.getInstance();
+            paginationData.push({ nodeIdentifier, data }); // center node
+
+            rightNodes.forEach((nodeIdentifier: string) => {
+                paginationData.push({ nodeIdentifier, data: httpSelectManager.getSelect(nodeIdentifier) });
+            });
+
+            // pagination means data is array;
+            const finalData: any[] = [];
+
+            paginationData.forEach((paginationData) => {
+                const data = paginationData.data;
                 if (data) {
-                    httpDataEmitter.emitData(nodeInstanceUUID, data.result, isLocal);
+                    // result is assumed to be array
+                    finalData.push(...data.result);
                 }
-            }
+            });
+
+            HttpDataEmitter.getInstance().emitData(paginationID, finalData, isLocal);
         }
     }
 }
 /**
- *
- *
- *
+ * this is for the delta manager
+ * single nodeIdentifier can be related to multiple paginationID
+ * when the data is fetched, it will be sent to all the paginationIDS
  */
-// this is for the delta manager
-// single daoIdentifier can be related to multiple nodeInstanceUUID
-// when the data is fetched, it will be sent to all the nodeInstanceUUID
 export class NodeIdentifierRelations {
     private static _instance: NodeIdentifierRelations;
-    private relation: Map<string, Set<string>> = new Map(); // daoIdentifier: string, nodeInstanceUUID: string[]
+    private relation: Map<string, Set<string>> = new Map(); // nodeIdentifier: string, paginationID: string[]
 
     private constructor() {}
 
@@ -95,19 +88,19 @@ export class NodeIdentifierRelations {
         return NodeIdentifierRelations._instance;
     }
 
-    pushRelation(daoIdentifier: string, nodeInstanceUUID: string) {
-        const set = this.relation.get(daoIdentifier);
+    pushRelation(nodeIdentifier: string, paginationID: string) {
+        const set = this.relation.get(nodeIdentifier);
         if (set) {
-            set.add(nodeInstanceUUID);
+            set.add(paginationID);
         } else {
             const newSet = new Set<string>();
-            newSet.add(nodeInstanceUUID);
-            this.relation.set(daoIdentifier, newSet);
+            newSet.add(paginationID);
+            this.relation.set(nodeIdentifier, newSet);
         }
     }
 
-    public getRelation(daoIdentifier: string): string[] {
-        const set = this.relation.get(daoIdentifier);
+    public getRelation(nodeIdentifier: string): string[] {
+        const set = this.relation.get(nodeIdentifier);
         if (set) {
             return Array.from(set);
         } else {

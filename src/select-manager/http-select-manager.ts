@@ -1,11 +1,12 @@
 import { BehaviorSubject } from 'rxjs';
-import { BootstrapConfiguration } from '../bootstrap';
-import { DataEmitterData, HttpSelect, NodeRoomConfig } from '../modal';
+import { NodeRoomBootstrap } from 'src/bootstrap';
+import { DataEmitterData, HttpSelect } from '../modal';
 import { OfflineManager } from './offline-manager';
 
 export class HttpDataEmitter {
     static _instance: HttpDataEmitter;
     private httpDataEmitter: Map<string, BehaviorSubject<DataEmitterData>> = new Map();
+    public hookForDeletion!: (paginationID: string) => void;
 
     private constructor() {}
 
@@ -16,60 +17,57 @@ export class HttpDataEmitter {
         return HttpDataEmitter._instance;
     }
 
-    public getNewSource(nodeInstanceUUID: string): BehaviorSubject<DataEmitterData> {
-        if (!this.httpDataEmitter.has(nodeInstanceUUID)) {
-            this.httpDataEmitter.set(nodeInstanceUUID, new BehaviorSubject<DataEmitterData>({ paginationUUID: nodeInstanceUUID, data: null, error: null, isLocal: false, status: 'loading' }));
+    // get the data emitter
+    public getNewSource(paginationID: string): BehaviorSubject<DataEmitterData> {
+        if (!this.httpDataEmitter.has(paginationID)) {
+            this.httpDataEmitter.set(paginationID, new BehaviorSubject<DataEmitterData>({ paginationID: paginationID, nodeRelationID: paginationID, data: null, error: null, isLocal: false, status: 'loading' }));
         }
 
-        return this.httpDataEmitter.get(nodeInstanceUUID) as BehaviorSubject<DataEmitterData>;
+        return this.httpDataEmitter.get(paginationID) as BehaviorSubject<DataEmitterData>;
     }
 
-    // mark complete
-    public markComplete(nodeInstanceUUID: string) {
-        if (this.httpDataEmitter.has(nodeInstanceUUID)) {
-            this.httpDataEmitter.get(nodeInstanceUUID)?.complete();
-            this.httpDataEmitter.delete(nodeInstanceUUID);
+    public markComplete(paginationID: string) {
+        if (this.httpDataEmitter.has(paginationID)) {
+            this.httpDataEmitter.get(paginationID)?.complete();
+            this.httpDataEmitter.delete(paginationID);
+            if (this.hookForDeletion) {
+                this.hookForDeletion(paginationID);
+            }
         }
     }
 
-    public patchData(nodeInstanceUUID: string, data: any) {
-        if (this.httpDataEmitter.has(nodeInstanceUUID)) {
-            const currentData = this.httpDataEmitter.get(nodeInstanceUUID)?.getValue();
+    public patchData(paginationID: string, data: Partial<DataEmitterData>) {
+        if (this.httpDataEmitter.has(paginationID)) {
+            const currentData = this.httpDataEmitter.get(paginationID)?.getValue();
             const newData = { ...currentData, ...data };
-            // TOOD: we need to freeze the object to prevent the user from changing it
-            this.httpDataEmitter.get(nodeInstanceUUID)?.next(JSON.parse(JSON.stringify(newData)));
+            this.httpDataEmitter.get(paginationID)?.next(JSON.parse(JSON.stringify(newData)));
         }
     }
 
-    public emitData(nodeInstanceUUID: string, data: any, isLocal: boolean) {
-        this.patchData(nodeInstanceUUID, { data: data, error: null, status: 'loaded', isLocal: isLocal });
+    public emitData(paginationID: string, data: any, isLocal: boolean) {
+        this.patchData(paginationID, { data: data, error: null, status: 'loaded', isLocal: isLocal });
     }
 
-    public emitError(nodeInstanceUUID: string, error: any) {
-        this.patchData(nodeInstanceUUID, { error: error, status: 'error' });
+    public emitError(paginationID: string, error: any) {
+        this.patchData(paginationID, { error: error, status: 'error' });
     }
 
     /**
      * Emit the data and complete the source
      */
-    public emitDataComplete(nodeInstanceUUID: string, data: any) {
-        if (this.httpDataEmitter.has(nodeInstanceUUID)) {
-            this.patchData(nodeInstanceUUID, { data: data, error: null, status: 'loaded' });
-            this.httpDataEmitter.get(nodeInstanceUUID)?.complete();
-            // delete
-            this.httpDataEmitter.delete(nodeInstanceUUID);
+    public emitDataComplete(paginationID: string, data: any, isLocal: boolean) {
+        if (this.httpDataEmitter.has(paginationID)) {
+            this.emitData(paginationID, data, isLocal);
+            this.markComplete(paginationID);
         }
     }
-
     /**
      * Emit the error and complete the source
      */
-    public emitErrorComplete(nodeInstanceUUID: string, error: any) {
-        if (this.httpDataEmitter.has(nodeInstanceUUID)) {
-            this.patchData(nodeInstanceUUID, { error: error, status: 'error' });
-            this.httpDataEmitter.get(nodeInstanceUUID)?.complete();
-            // delete
-            this.httpDataEmitter.delete(nodeInstanceUUID);
+    public emitErrorComplete(paginationID: string, error: any) {
+        if (this.httpDataEmitter.has(paginationID)) {
+            this.emitError(paginationID, error);
+            this.markComplete(paginationID);
         }
     }
 }
@@ -87,20 +85,11 @@ export class HttpSelectManager {
         return HttpSelectManager._instance;
     }
 
-    public addSelect(nodeIdentifier: string, httpClientUUID: string, roomName: string, nodeName: string, paramObject: any, result: any) {
-        const httpSelect: HttpSelect = {
-            httpClientUUID,
-            roomName,
-            nodeName,
-            paramObject,
-            result,
-        };
+    public addSelect(nodeIdentifier: string, httpSelect: HttpSelect) {
         this.cachedNodes.set(nodeIdentifier, httpSelect);
 
-        const nodeConfig: NodeRoomConfig = BootstrapConfiguration.getInstance().getNodeConfig();
-        if (nodeConfig.bootstrapConfig.supportOffline) {
-            const offlineManager = OfflineManager.getInstance();
-            offlineManager.setLocal(httpSelect.httpClientUUID, httpSelect);
+        if (NodeRoomBootstrap.getInstance().getNodeRoomConfig().supportOffline) {
+            OfflineManager.getInstance().setLocal(nodeIdentifier, httpSelect);
         }
     }
 

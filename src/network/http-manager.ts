@@ -1,5 +1,5 @@
-import { BootstrapConfiguration } from '../bootstrap';
-import { DeltaData, HttpNetworkFetch, HttpSelect, NodeRoomConfig } from '../modal';
+import { NodeRoomBootstrap } from 'src/bootstrap';
+import { DeltaData, HttpNetworkFetch, HttpSelect } from '../modal';
 import { HttpPagination, NodeIdentifierRelations } from '../pagination/http-pagination';
 import { DeltaManager } from '../select-manager/delta-manager';
 import { HttpDataEmitter, HttpSelectManager } from '../select-manager/http-select-manager';
@@ -17,50 +17,45 @@ export class HttpNetworkManager {
     }
 
     public async fetch(httpCall: HttpNetworkFetch) {
-        const nodeConfig: NodeRoomConfig = BootstrapConfiguration.getInstance().getNodeConfig();
+        const nodeConfig = NodeRoomBootstrap.getInstance().getNodeRoomConfig();
 
         const header = new Headers();
         header.append('Content-Type', 'application/json');
         header.append('Accept', 'application/json');
         header.append('can-cache', httpCall.canCache ? '1' : '0');
-        header.append('client-instance-uuid', httpCall.httpClientUUID);
+        header.append('client-instance-uuid', httpCall.clientInstanceUUID);
+        header.append('universal-unique-user-identifier', httpCall.universalUniqueUserIdentifier);
 
-        const data = await fetch(nodeConfig.bootstrapConfig.host + '/node-room', {
+        const data = await fetch(nodeConfig.host + '/node-room', {
             method: 'POST',
             headers: header,
             body: JSON.stringify({ roomName: httpCall.roomName, nodeName: httpCall.nodeName, paramObject: httpCall.paramObject }),
         }).then((response) => response.json());
 
         if (data.hasOwnProperty('nodeIdentifier')) {
-            // this is select node with cache enabled
-            // we need to cache this locally to httpSelectManager
+            // whenever there is node identifier, it means that the node is select node
             const nodeIdentifier = data.nodeIdentifier;
             const result = data.result;
 
-            HttpSelectManager.getInstance().addSelect(nodeIdentifier, httpCall.httpClientUUID, httpCall.roomName, httpCall.nodeName, httpCall.paramObject, result);
-
-            // call the paginator to emit the data
             const httpSelect: HttpSelect = {
-                roomName: httpCall.roomName,
-                httpClientUUID: httpCall.httpClientUUID,
                 nodeName: httpCall.nodeName,
+                roomName: httpCall.roomName,
+                universalUniqueUserIdentifier: httpCall.universalUniqueUserIdentifier,
                 paramObject: httpCall.paramObject,
                 result: result,
             };
 
-            HttpPagination.getInstance().sendData(httpSelect, nodeIdentifier, httpCall.nodeInstanceUUID);
-
-            // add it to relation tree
-            NodeIdentifierRelations.getInstance().pushRelation(nodeIdentifier, httpCall.nodeInstanceUUID);
+            HttpSelectManager.getInstance().addSelect(nodeIdentifier, httpSelect);
+            HttpPagination.getInstance().sendData(httpSelect, nodeIdentifier, httpCall.paginationID);
+            NodeIdentifierRelations.getInstance().pushRelation(nodeIdentifier, httpCall.paginationID);
         } else {
             // this is modification node with by default select disabled
             // emit the data to listener immediately
             // complete the stream , because modification is called only one time no further communication is required
-            HttpDataEmitter.getInstance().emitDataComplete(httpCall.nodeInstanceUUID, data.result);
+            HttpDataEmitter.getInstance().emitDataComplete(httpCall.paginationID, data.result, false);
 
             if (data.hasOwnProperty('delta')) {
                 const delta: DeltaData[] = data.delta;
-
                 DeltaManager.getInstance().settleDelta(delta);
             }
         }
