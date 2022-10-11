@@ -1,7 +1,6 @@
 import { NodeRoomBootstrap } from 'src/bootstrap';
-import { DeltaData, HttpNetworkFetch, HttpSelect } from '../modal';
+import { HttpNetworkFetch, HttpSelect } from '../modal';
 import { HttpPagination, NodeIdentifierRelations } from '../pagination/http-pagination';
-import { DeltaManager } from '../select-manager/delta-manager';
 import { HttpDataEmitter, HttpSelectManager } from '../select-manager/http-select-manager';
 
 export class HttpNetworkManager {
@@ -53,11 +52,6 @@ export class HttpNetworkManager {
             // emit the data to listener immediately
             // complete the stream , because modification is called only one time no further communication is required
             HttpDataEmitter.getInstance().emitDataComplete(httpCall.paginationID, data.result, false);
-
-            if (data.hasOwnProperty('delta')) {
-                const delta: DeltaData[] = data.delta;
-                DeltaManager.getInstance().settleDelta(delta);
-            }
         }
     }
 }

@@ -24,7 +24,6 @@ export class Node {
     public call(nodeName: string, paramObject: any, config?: NodeCallConfig) {
         if (!nodeName) throw new Error('Node name is required');
         if (!paramObject) throw new Error('Param object is required');
-        if (config && 'paginationID' in config && (!config.paginationID || typeof config.paginationID === 'number' || config.paginationID === '' || config.paginationID.length < 10)) throw new Error('Pagination id is required');
 
         const nodeConfig = NodeRoomBootstrap.getInstance().getNodeRoomConfig();
 
