@@ -1,4 +1,5 @@
 import { NodeRoomBootstrap } from 'src/bootstrap';
+import { NodeCleaner } from 'src/node';
 import { HttpNetworkFetch, HttpSelect } from '../modal';
 import { HttpPagination, NodeIdentifierRelations } from '../pagination/http-pagination';
 import { HttpDataEmitter, HttpSelectManager } from '../select-manager/http-select-manager';
@@ -52,6 +53,7 @@ export class HttpNetworkManager {
             // emit the data to listener immediately
             // complete the stream , because modification is called only one time no further communication is required
             HttpDataEmitter.getInstance().emitDataComplete(httpCall.paginationID, data.result, false);
+            NodeCleaner.getInstance().callHookForModificationNode(httpCall.paginationID);
         }
     }
 }

@@ -15,7 +15,7 @@ export async function nodeRoomBootstrap(config: BootStrapConfig) {
     if (!config.supportOffline) throw new Error('NodeRoom supportOffline is required');
     if (!config.canCache) throw new Error('NodeRoom canCache is required');
 
-    NodeRoomBootstrap.getInstance().setNodeRoomConfig(config);
+    await NodeRoomBootstrap.getInstance().setNodeRoomConfig(config);
     return;
 }
 
@@ -66,10 +66,10 @@ export class NodeRoomBootstrap {
     }
 
     // set the node room config
-    public setNodeRoomConfig(nodeRoomConfig: BootStrapConfig) {
+    public async setNodeRoomConfig(nodeRoomConfig: BootStrapConfig) {
         this.nodeRoomConfig = nodeRoomConfig;
-        this.registerClientInstance().then(() => {
-            this.registerSSE();
+        return this.registerClientInstance().then(() => {
+           return this.registerSSE();
         });
     }
 

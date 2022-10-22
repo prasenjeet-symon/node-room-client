@@ -1,12 +1,11 @@
 import { BehaviorSubject } from 'rxjs';
 import { NodeRoomBootstrap } from 'src/bootstrap';
-import { DataEmitterData, HttpSelect } from '../modal';
+import { NodeResult, HttpSelect } from '../modal';
 import { OfflineManager } from './offline-manager';
 
 export class HttpDataEmitter {
     static _instance: HttpDataEmitter;
-    private httpDataEmitter: Map<string, BehaviorSubject<DataEmitterData>> = new Map();
-    public hookForDeletion!: (paginationID: string) => void;
+    private httpDataEmitter: Map<string, BehaviorSubject<NodeResult>> = new Map(); // paginationID --> BehaviorSubject
 
     private constructor() {}
 
@@ -18,25 +17,22 @@ export class HttpDataEmitter {
     }
 
     // get the data emitter
-    public getNewSource(paginationID: string): BehaviorSubject<DataEmitterData> {
+    public getNewSource(paginationID: string): BehaviorSubject<NodeResult> {
         if (!this.httpDataEmitter.has(paginationID)) {
-            this.httpDataEmitter.set(paginationID, new BehaviorSubject<DataEmitterData>({ paginationID: paginationID, nodeRelationID: paginationID, data: null, error: null, isLocal: false, status: 'loading' }));
+            this.httpDataEmitter.set(paginationID, new BehaviorSubject<NodeResult>({ paginationID: paginationID, nodeRelationID: paginationID, data: null, error: null, isLocal: false, status: 'loading' }));
         }
 
-        return this.httpDataEmitter.get(paginationID) as BehaviorSubject<DataEmitterData>;
+        return this.httpDataEmitter.get(paginationID) as BehaviorSubject<NodeResult>;
     }
 
     public markComplete(paginationID: string) {
         if (this.httpDataEmitter.has(paginationID)) {
             this.httpDataEmitter.get(paginationID)?.complete();
             this.httpDataEmitter.delete(paginationID);
-            if (this.hookForDeletion) {
-                this.hookForDeletion(paginationID);
-            }
         }
     }
 
-    public patchData(paginationID: string, data: Partial<DataEmitterData>) {
+    public patchData(paginationID: string, data: Partial<NodeResult>) {
         if (this.httpDataEmitter.has(paginationID)) {
             const currentData = this.httpDataEmitter.get(paginationID)?.getValue();
             const newData = { ...currentData, ...data };

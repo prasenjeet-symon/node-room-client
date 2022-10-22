@@ -1,9 +1,9 @@
 /**
  * This function simply returns the value of the input parameter attached together.
  */
-export function simpleNodeUUID(httpClientUUID: string, databaseName: string, nodeName: string, paramObject: any): string {
+export function simpleNodeUUID(roomName: string, nodeName: string, paramObject: any): string {
     // this string uniquely identifies the node call
-    return `${httpClientUUID}_${databaseName}_${nodeName}_${JSON.stringify(paramObject)}`;
+    return `${roomName}_${nodeName}_${JSON.stringify(paramObject)}`;
 }
 
 export function isObject(value: any) {

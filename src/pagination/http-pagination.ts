@@ -69,6 +69,11 @@ export class HttpPagination {
             HttpDataEmitter.getInstance().emitData(paginationID, finalData, isLocal);
         }
     }
+
+    // clear the history
+    public clearHistory(paginationID: string) {
+        this.paginationHistory.delete(paginationID);
+    }
 }
 /**
  * this is for the delta manager
@@ -106,5 +111,15 @@ export class NodeIdentifierRelations {
         } else {
             return [];
         }
+    }
+
+    // remove the relation
+    public removeRelation(paginationID: string) {
+        this.relation.forEach((set, nodeIdentifier) => {
+            set.delete(paginationID);
+            if (set.size === 0) {
+                this.relation.delete(nodeIdentifier);
+            }
+        });
     }
 }

@@ -14,8 +14,8 @@ export class OfflineManager {
         return OfflineManager._instance;
     }
 
-    public async getLocal(universalUniqueUserIdentifier: string, roomName: string, nodeName: string, paramObject: any): Promise<LocalStorage | null> {
-        const localId: string = simpleNodeUUID(universalUniqueUserIdentifier, roomName, nodeName, paramObject);
+    public async getLocal(roomName: string, nodeName: string, paramObject: any): Promise<LocalStorage | null> {
+        const localId: string = simpleNodeUUID(roomName, nodeName, paramObject);
         const data = localStorage.getItem(localId);
         if (data) {
             return JSON.parse(data);
@@ -25,7 +25,7 @@ export class OfflineManager {
     }
 
     public setLocal(nodeIdentifier: string, data: HttpSelect) {
-        const localId: string = simpleNodeUUID(data.universalUniqueUserIdentifier, data.roomName, data.nodeName, data.paramObject);
+        const localId: string = simpleNodeUUID(data.roomName, data.nodeName, data.paramObject);
         const localData: LocalStorage = {
             nodeIdentifier: nodeIdentifier,
             data: data,
@@ -35,12 +35,12 @@ export class OfflineManager {
     }
 
     public async fetch(httpCall: HttpNetworkFetch) {
-        const localData = await this.getLocal(httpCall.universalUniqueUserIdentifier, httpCall.roomName, httpCall.nodeName, httpCall.paramObject);
+        const localData = await this.getLocal(httpCall.roomName, httpCall.nodeName, httpCall.paramObject);
         if (localData) {
             const localDataForPagination: HttpSelect | undefined = {
                 universalUniqueUserIdentifier: localData.data.universalUniqueUserIdentifier,
-                nodeName: localData.data.nodeName,
                 roomName: localData.data.roomName,
+                nodeName: localData.data.nodeName,
                 paramObject: localData.data.paramObject,
                 result: localData.data.result,
             };

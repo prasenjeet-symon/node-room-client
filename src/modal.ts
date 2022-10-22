@@ -35,7 +35,7 @@ export interface BootStrapConfig {
 
 export type LOADING_STATUS = 'loading' | 'loaded' | 'error';
 
-export interface DataEmitterData {
+export interface NodeResult {
     status: LOADING_STATUS;
     error: any | null;
     data: any | null;

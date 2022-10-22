@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid';
 import { NodeRoomBootstrap } from './bootstrap';
 import { HttpNetworkFetch, NodeCallConfig } from './modal';
 import { HttpNetworkManager } from './network/http-manager';
+import { HttpPagination, NodeIdentifierRelations } from './pagination/http-pagination';
 import { HttpDataEmitter } from './select-manager/http-select-manager';
 import { OfflineManager } from './select-manager/offline-manager';
 
@@ -42,5 +43,43 @@ export class Node {
         OfflineManager.getInstance().fetch(httpCall);
         HttpNetworkManager.getInstance().fetch(httpCall);
         return HttpDataEmitter.getInstance().getNewSource(httpCall.paginationID).asObservable();
+    }
+}
+/**
+ * ********************************************************************************************************************
+ * Node cleaner
+ * ********************************************************************************************************************
+ */
+export class NodeCleaner {
+    private static _instance: NodeCleaner;
+    private hookForModificationNode!: (paginationID: string) => void;
+
+    private constructor() {}
+
+    public static getInstance(): NodeCleaner {
+        if (!NodeCleaner._instance) {
+            NodeCleaner._instance = new NodeCleaner();
+        }
+        return NodeCleaner._instance;
+    }
+
+    public clean(paginationID: string) {
+        // incoming node is no longer required
+        // clear the memory
+        HttpPagination.getInstance().clearHistory(paginationID);
+        HttpDataEmitter.getInstance().markComplete(paginationID);
+        NodeIdentifierRelations.getInstance().removeRelation(paginationID);
+    }
+
+    // listen for modification node
+    public listenForModificationNode(hook: (paginationID: string) => void) {
+        this.hookForModificationNode = hook;
+    }
+
+    // call hook for modification node
+    public callHookForModificationNode(paginationID: string) {
+        if(this.hookForModificationNode){
+            this.hookForModificationNode(paginationID);
+        }
     }
 }
